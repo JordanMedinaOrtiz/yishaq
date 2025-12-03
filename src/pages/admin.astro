@@ -1,0 +1,26 @@
+---
+import { AdminApp } from '../components/admin/AdminApp';
+import Layout from '../layouts/Layout.astro';
+import { validateSession, getTokenFromCookie } from '../lib/auth';
+
+// Protección de ruta en el servidor
+const cookieHeader = Astro.request.headers.get('cookie');
+const token = getTokenFromCookie(cookieHeader);
+
+let user = null;
+let isAdmin = false;
+
+if (token) {
+  user = await validateSession(token);
+  isAdmin = user?.role === 'admin';
+}
+
+// Redirigir si no es admin
+if (!isAdmin) {
+  return Astro.redirect('/login?redirect=/admin&error=unauthorized');
+}
+---
+
+<Layout>
+	<AdminApp client:load />
+</Layout>
