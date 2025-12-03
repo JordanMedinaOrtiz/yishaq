@@ -19,12 +19,11 @@ export const GET: APIRoute = async ({ request, url }) => {
     const orderId = url.searchParams.get("id");
 
     if (orderId) {
-      // Obtener orden específica
-      const order = db
+      // Obtener orden específica (async con libsql)
+      const [order] = await db
         .select()
         .from(orders)
-        .where(eq(orders.id, orderId))
-        .get();
+        .where(eq(orders.id, orderId));
 
       if (!order) {
         return new Response(
@@ -41,12 +40,11 @@ export const GET: APIRoute = async ({ request, url }) => {
         );
       }
 
-      // Obtener items de la orden
-      const items = db
+      // Obtener items de la orden (async con libsql)
+      const items = await db
         .select()
         .from(orderItems)
-        .where(eq(orderItems.orderId, orderId))
-        .all();
+        .where(eq(orderItems.orderId, orderId));
 
       return new Response(
         JSON.stringify({ success: true, order: { ...order, items } }),
@@ -54,13 +52,12 @@ export const GET: APIRoute = async ({ request, url }) => {
       );
     }
 
-    // Listar todas las órdenes del usuario
-    const userOrders = db
+    // Listar todas las órdenes del usuario (async con libsql)
+    const userOrders = await db
       .select()
       .from(orders)
       .where(eq(orders.userId, user.id))
-      .orderBy(desc(orders.createdAt))
-      .all();
+      .orderBy(desc(orders.createdAt));
 
     return new Response(JSON.stringify({ success: true, orders: userOrders }), {
       status: 200,

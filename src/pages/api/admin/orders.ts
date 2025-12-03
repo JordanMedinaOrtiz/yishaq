@@ -31,8 +31,8 @@ export const GET: APIRoute = async ({ cookies }) => {
       );
     }
 
-    // Obtener todos los pedidos con información del usuario
-    const allOrders = db
+    // Obtener todos los pedidos con información del usuario - async con libsql
+    const allOrders = await db
       .select({
         id: orders.id,
         orderNumber: orders.orderNumber,
@@ -58,13 +58,12 @@ export const GET: APIRoute = async ({ cookies }) => {
         deliveredAt: orders.deliveredAt,
       })
       .from(orders)
-      .orderBy(desc(orders.createdAt))
-      .all();
+      .orderBy(desc(orders.createdAt));
 
-    // Obtener items de cada pedido
+    // Obtener items de cada pedido - async con libsql
     const ordersWithItems = await Promise.all(
       allOrders.map(async (order) => {
-        const items = db
+        const items = await db
           .select({
             id: orderItems.id,
             productName: orderItems.productName,
@@ -75,8 +74,7 @@ export const GET: APIRoute = async ({ cookies }) => {
             totalPrice: orderItems.totalPrice,
           })
           .from(orderItems)
-          .where(eq(orderItems.orderId, order.id))
-          .all();
+          .where(eq(orderItems.orderId, order.id));
 
         return {
           ...order,
@@ -165,15 +163,14 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       updateData.adminNotes = adminNotes;
     }
 
-    // Actualizar pedido
-    db.update(orders).set(updateData).where(eq(orders.id, orderId)).run();
+    // Actualizar pedido - async con libsql
+    await db.update(orders).set(updateData).where(eq(orders.id, orderId));
 
-    // Obtener pedido actualizado
-    const updatedOrder = db
+    // Obtener pedido actualizado - async con libsql
+    const [updatedOrder] = await db
       .select()
       .from(orders)
-      .where(eq(orders.id, orderId))
-      .get();
+      .where(eq(orders.id, orderId));
 
     return new Response(
       JSON.stringify({

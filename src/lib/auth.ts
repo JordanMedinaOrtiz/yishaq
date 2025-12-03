@@ -121,15 +121,13 @@ export async function createSession(
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + SESSION_DURATION_DAYS);
 
-  // Guardar sesión en BD
-  db.insert(sessions)
-    .values({
-      id: sessionId,
-      userId,
-      expiresAt,
-      createdAt: new Date(),
-    })
-    .run();
+  // Guardar sesión en BD (async con libsql)
+  await db.insert(sessions).values({
+    id: sessionId,
+    userId,
+    expiresAt,
+    createdAt: new Date(),
+  });
 
   // Crear token JWT
   const token = await createToken({ userId, sessionId, role });
@@ -137,11 +135,11 @@ export async function createSession(
 }
 
 export async function invalidateSession(sessionId: string): Promise<void> {
-  db.delete(sessions).where(eq(sessions.id, sessionId)).run();
+  await db.delete(sessions).where(eq(sessions.id, sessionId));
 }
 
 export async function invalidateAllUserSessions(userId: string): Promise<void> {
-  db.delete(sessions).where(eq(sessions.userId, userId)).run();
+  await db.delete(sessions).where(eq(sessions.userId, userId));
 }
 
 // ============================================
@@ -155,12 +153,11 @@ export async function register(
   lastName: string
 ): Promise<AuthResult> {
   try {
-    // Verificar si el email ya existe
-    const existingUser = db
+    // Verificar si el email ya existe (async con libsql)
+    const [existingUser] = await db
       .select()
       .from(users)
-      .where(eq(users.email, email.toLowerCase()))
-      .get();
+      .where(eq(users.email, email.toLowerCase()));
 
     if (existingUser) {
       return { success: false, error: "El email ya está registrado" };
@@ -178,20 +175,18 @@ export async function register(
     const userId = crypto.randomUUID();
     const passwordHash = await hashPassword(password);
 
-    db.insert(users)
-      .values({
-        id: userId,
-        email: email.toLowerCase(),
-        passwordHash,
-        firstName,
-        lastName,
-        role: "client",
-        isActive: true,
-        emailVerified: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .run();
+    await db.insert(users).values({
+      id: userId,
+      email: email.toLowerCase(),
+      passwordHash,
+      firstName,
+      lastName,
+      role: "client",
+      isActive: true,
+      emailVerified: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
     // Crear sesión
     const token = await createSession(userId, "client");
@@ -218,12 +213,11 @@ export async function login(
   password: string
 ): Promise<AuthResult> {
   try {
-    // Buscar usuario
-    const user = db
+    // Buscar usuario (async con libsql)
+    const [user] = await db
       .select()
       .from(users)
-      .where(eq(users.email, email.toLowerCase()))
-      .get();
+      .where(eq(users.email, email.toLowerCase()));
 
     if (!user) {
       return { success: false, error: "Credenciales incorrectas" };
@@ -284,8 +278,8 @@ export async function validateSession(token: string): Promise<AuthUser | null> {
       return null;
     }
 
-    // Verificar que la sesión exista y no haya expirado
-    const session = db
+    // Verificar que la sesión exista y no haya expirado (async con libsql)
+    const [session] = await db
       .select()
       .from(sessions)
       .where(
@@ -293,19 +287,17 @@ export async function validateSession(token: string): Promise<AuthUser | null> {
           eq(sessions.id, payload.sessionId),
           gt(sessions.expiresAt, new Date())
         )
-      )
-      .get();
+      );
 
     if (!session) {
       return null;
     }
 
-    // Obtener usuario
-    const user = db
+    // Obtener usuario (async con libsql)
+    const [user] = await db
       .select()
       .from(users)
-      .where(eq(users.id, payload.userId))
-      .get();
+      .where(eq(users.id, payload.userId));
 
     if (!user || !user.isActive) {
       return null;

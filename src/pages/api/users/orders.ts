@@ -60,55 +60,55 @@ export const GET: APIRoute = async ({ request }) => {
       );
     }
 
-    // 2. Obtener todas las órdenes del usuario
-    const userOrders = db
+    // 2. Obtener todas las órdenes del usuario - async con libsql
+    const userOrders = await db
       .select()
       .from(orders)
       .where(eq(orders.userId, user.id))
-      .orderBy(desc(orders.createdAt))
-      .all();
+      .orderBy(desc(orders.createdAt));
 
-    // 3. Para cada orden, obtener sus items
-    const ordersWithItems: OrderResponse[] = userOrders.map((order) => {
-      const items = db
-        .select({
-          id: orderItems.id,
-          productName: orderItems.productName,
-          productImage: orderItems.productImage,
-          size: orderItems.size,
-          quantity: orderItems.quantity,
-          unitPrice: orderItems.unitPrice,
-          totalPrice: orderItems.totalPrice,
-        })
-        .from(orderItems)
-        .where(eq(orderItems.orderId, order.id))
-        .all();
+    // 3. Para cada orden, obtener sus items - async con libsql
+    const ordersWithItems: OrderResponse[] = await Promise.all(
+      userOrders.map(async (order) => {
+        const items = await db
+          .select({
+            id: orderItems.id,
+            productName: orderItems.productName,
+            productImage: orderItems.productImage,
+            size: orderItems.size,
+            quantity: orderItems.quantity,
+            unitPrice: orderItems.unitPrice,
+            totalPrice: orderItems.totalPrice,
+          })
+          .from(orderItems)
+          .where(eq(orderItems.orderId, order.id));
 
-      return {
-        id: order.id,
-        orderNumber: order.orderNumber,
-        status: order.status,
-        paymentStatus: order.paymentStatus,
-        paymentMethod: order.paymentMethod,
-        subtotal: order.subtotal,
-        shippingCost: order.shippingCost,
-        total: order.total,
-        shippingAddress: order.shippingAddress,
-        shippingCity: order.shippingCity,
-        trackingNumber: order.trackingNumber,
-        createdAt:
-          order.createdAt instanceof Date
-            ? order.createdAt.toISOString()
-            : new Date(order.createdAt as any).toISOString(),
-        paidAt:
-          order.paidAt instanceof Date
-            ? order.paidAt.toISOString()
-            : order.paidAt
-            ? new Date(order.paidAt as any).toISOString()
-            : null,
-        items,
-      };
-    });
+        return {
+          id: order.id,
+          orderNumber: order.orderNumber,
+          status: order.status,
+          paymentStatus: order.paymentStatus,
+          paymentMethod: order.paymentMethod,
+          subtotal: order.subtotal,
+          shippingCost: order.shippingCost,
+          total: order.total,
+          shippingAddress: order.shippingAddress,
+          shippingCity: order.shippingCity,
+          trackingNumber: order.trackingNumber,
+          createdAt:
+            order.createdAt instanceof Date
+              ? order.createdAt.toISOString()
+              : new Date(order.createdAt as any).toISOString(),
+          paidAt:
+            order.paidAt instanceof Date
+              ? order.paidAt.toISOString()
+              : order.paidAt
+              ? new Date(order.paidAt as any).toISOString()
+              : null,
+          items,
+        };
+      })
+    );
 
     return new Response(
       JSON.stringify({

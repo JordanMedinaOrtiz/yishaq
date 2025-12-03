@@ -9,14 +9,14 @@ import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
 import * as schema from "./schema";
 
-// Determinar si estamos en producción o desarrollo
-const isProduction =
-  process.env.NODE_ENV === "production" || process.env.TURSO_DATABASE_URL;
+// En Astro, las variables de entorno del servidor se acceden con import.meta.env
+const TURSO_DATABASE_URL = import.meta.env.TURSO_DATABASE_URL;
+const TURSO_AUTH_TOKEN = import.meta.env.TURSO_AUTH_TOKEN;
 
 // Cliente de LibSQL (Turso en producción, SQLite local en desarrollo)
 const client = createClient({
-  url: process.env.TURSO_DATABASE_URL || "file:yishaq.db",
-  authToken: process.env.TURSO_AUTH_TOKEN,
+  url: TURSO_DATABASE_URL || "file:yishaq.db",
+  authToken: TURSO_AUTH_TOKEN,
 });
 
 // Crear instancia de Drizzle con el esquema

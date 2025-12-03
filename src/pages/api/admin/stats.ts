@@ -31,40 +31,37 @@ export const GET: APIRoute = async ({ cookies }) => {
       );
     }
 
-    // Obtener ventas totales (solo pedidos pagados)
-    const salesResult = db
+    // Obtener ventas totales (solo pedidos pagados) - async con libsql
+    const [salesResult] = await db
       .select({
         total: sql<number>`COALESCE(SUM(${orders.total}), 0)`,
       })
       .from(orders)
-      .where(eq(orders.paymentStatus, "paid"))
-      .get();
+      .where(eq(orders.paymentStatus, "paid"));
 
     const totalSales = salesResult?.total || 0;
 
-    // Obtener total de pedidos
-    const ordersResult = db
+    // Obtener total de pedidos - async con libsql
+    const [ordersResult] = await db
       .select({
         count: sql<number>`COUNT(*)`,
       })
-      .from(orders)
-      .get();
+      .from(orders);
 
     const totalOrders = ordersResult?.count || 0;
 
-    // Obtener total de productos activos
-    const productsResult = db
+    // Obtener total de productos activos - async con libsql
+    const [productsResult] = await db
       .select({
         count: sql<number>`COUNT(*)`,
       })
       .from(products)
-      .where(eq(products.isActive, true))
-      .get();
+      .where(eq(products.isActive, true));
 
     const totalProducts = productsResult?.count || 0;
 
-    // Obtener productos con stock bajo (menor al umbral definido o menor a 10)
-    const lowStockResult = db
+    // Obtener productos con stock bajo - async con libsql
+    const [lowStockResult] = await db
       .select({
         count: sql<number>`COUNT(*)`,
       })
@@ -74,19 +71,17 @@ export const GET: APIRoute = async ({ cookies }) => {
           eq(products.isActive, true),
           sql`${products.stock} <= ${products.lowStockThreshold}`
         )
-      )
-      .get();
+      );
 
     const lowStockItems = lowStockResult?.count || 0;
 
-    // Obtener pedidos pendientes
-    const pendingOrdersResult = db
+    // Obtener pedidos pendientes - async con libsql
+    const [pendingOrdersResult] = await db
       .select({
         count: sql<number>`COUNT(*)`,
       })
       .from(orders)
-      .where(eq(orders.status, "pending"))
-      .get();
+      .where(eq(orders.status, "pending"));
 
     const pendingOrders = pendingOrdersResult?.count || 0;
 
@@ -94,7 +89,7 @@ export const GET: APIRoute = async ({ cookies }) => {
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const monthlySalesResult = db
+    const [monthlySalesResult] = await db
       .select({
         total: sql<number>`COALESCE(SUM(${orders.total}), 0)`,
       })
@@ -104,13 +99,12 @@ export const GET: APIRoute = async ({ cookies }) => {
           eq(orders.paymentStatus, "paid"),
           gt(orders.createdAt, firstDayOfMonth)
         )
-      )
-      .get();
+      );
 
     const monthlySales = monthlySalesResult?.total || 0;
 
-    // Obtener pedidos recientes (últimos 5)
-    const recentOrders = db
+    // Obtener pedidos recientes (últimos 5) - async con libsql
+    const recentOrders = await db
       .select({
         id: orders.id,
         orderNumber: orders.orderNumber,
@@ -123,8 +117,7 @@ export const GET: APIRoute = async ({ cookies }) => {
       })
       .from(orders)
       .orderBy(sql`${orders.createdAt} DESC`)
-      .limit(5)
-      .all();
+      .limit(5);
 
     return new Response(
       JSON.stringify({

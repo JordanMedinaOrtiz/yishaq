@@ -110,12 +110,11 @@ export const POST: APIRoute = async ({ request }) => {
       // Log para debugging
       console.log(`[Checkout] Buscando producto con ID: "${item.productId}"`);
 
-      // Obtener producto de la BD
-      const product = db
+      // Obtener producto de la BD (async con libsql)
+      const [product] = await db
         .select()
         .from(products)
-        .where(eq(products.id, item.productId))
-        .get();
+        .where(eq(products.id, item.productId));
 
       if (!product) {
         console.error(
@@ -174,64 +173,60 @@ export const POST: APIRoute = async ({ request }) => {
     const discount = 0; // TODO: Implementar cupones
     const total = subtotal + shippingCost + tax - discount;
 
-    // 6. Crear la orden
+    // 6. Crear la orden (async con libsql)
     const orderId = crypto.randomUUID();
     const orderNumber = generateOrderNumber();
     const now = new Date();
 
-    db.insert(orders)
-      .values({
-        id: orderId,
-        orderNumber,
-        userId,
-        status: "pending",
-        paymentStatus: "pending",
-        paymentMethod,
-        subtotal,
-        shippingCost,
-        tax,
-        discount,
-        total,
-        shippingFirstName: shippingInfo.firstName,
-        shippingLastName: shippingInfo.lastName || "",
-        shippingEmail: shippingInfo.email,
-        shippingPhone: shippingInfo.phone || null,
-        shippingAddress: shippingInfo.address,
-        shippingCity: shippingInfo.city,
-        shippingPostalCode: shippingInfo.postalCode,
-        shippingCountry: shippingInfo.country || "México",
-        customerNotes: customerNotes || null,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .run();
+    await db.insert(orders).values({
+      id: orderId,
+      orderNumber,
+      userId,
+      status: "pending",
+      paymentStatus: "pending",
+      paymentMethod,
+      subtotal,
+      shippingCost,
+      tax,
+      discount,
+      total,
+      shippingFirstName: shippingInfo.firstName,
+      shippingLastName: shippingInfo.lastName || "",
+      shippingEmail: shippingInfo.email,
+      shippingPhone: shippingInfo.phone || null,
+      shippingAddress: shippingInfo.address,
+      shippingCity: shippingInfo.city,
+      shippingPostalCode: shippingInfo.postalCode,
+      shippingCountry: shippingInfo.country || "México",
+      customerNotes: customerNotes || null,
+      createdAt: now,
+      updatedAt: now,
+    });
 
     // 7. Crear los items de la orden y actualizar stock
     for (const item of validatedItems) {
-      // Insertar item de orden (snapshot del producto)
-      db.insert(orderItems)
-        .values({
-          id: crypto.randomUUID(),
-          orderId,
-          productId: item.productId,
-          productName: item.productData.name,
-          productImage: item.productData.imageUrl,
-          productSku: item.productData.sku,
-          size: item.size || null,
-          quantity: item.quantity,
-          unitPrice: item.price,
-          totalPrice: item.price * item.quantity,
-        })
-        .run();
+      // Insertar item de orden (async con libsql)
+      await db.insert(orderItems).values({
+        id: crypto.randomUUID(),
+        orderId,
+        productId: item.productId,
+        productName: item.productData.name,
+        productImage: item.productData.imageUrl,
+        productSku: item.productData.sku,
+        size: item.size || null,
+        quantity: item.quantity,
+        unitPrice: item.price,
+        totalPrice: item.price * item.quantity,
+      });
 
-      // Actualizar stock del producto
-      db.update(products)
+      // Actualizar stock del producto (async con libsql)
+      await db
+        .update(products)
         .set({
           stock: item.productData.stock - item.quantity,
           updatedAt: now,
         })
-        .where(eq(products.id, item.productId))
-        .run();
+        .where(eq(products.id, item.productId));
     }
 
     // 8. Respuesta exitosa

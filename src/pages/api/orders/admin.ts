@@ -20,8 +20,8 @@ export const GET: APIRoute = async ({ request, url }) => {
     const limit = parseInt(url.searchParams.get("limit") || "50");
     const offset = parseInt(url.searchParams.get("offset") || "0");
 
-    // Obtener todas las órdenes
-    let allOrders = db
+    // Obtener todas las órdenes - async con libsql
+    let allOrders = await db
       .select({
         id: orders.id,
         orderNumber: orders.orderNumber,
@@ -38,8 +38,7 @@ export const GET: APIRoute = async ({ request, url }) => {
         createdAt: orders.createdAt,
       })
       .from(orders)
-      .orderBy(desc(orders.createdAt))
-      .all();
+      .orderBy(desc(orders.createdAt));
 
     // Filtrar por estado si se especifica
     if (status) {
@@ -101,8 +100,11 @@ export const PUT: APIRoute = async ({ request }) => {
       );
     }
 
-    // Verificar que la orden existe
-    const order = db.select().from(orders).where(eq(orders.id, orderId)).get();
+    // Verificar que la orden existe - async con libsql
+    const [order] = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, orderId));
 
     if (!order) {
       return new Response(
@@ -153,8 +155,8 @@ export const PUT: APIRoute = async ({ request }) => {
     if (trackingUrl !== undefined) updates.trackingUrl = trackingUrl;
     if (adminNotes !== undefined) updates.adminNotes = adminNotes;
 
-    // Actualizar orden
-    db.update(orders).set(updates).where(eq(orders.id, orderId)).run();
+    // Actualizar orden - async con libsql
+    await db.update(orders).set(updates).where(eq(orders.id, orderId));
 
     return new Response(
       JSON.stringify({ success: true, message: "Orden actualizada" }),

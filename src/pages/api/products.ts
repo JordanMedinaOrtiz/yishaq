@@ -14,8 +14,8 @@ export const GET: APIRoute = async ({ url }) => {
     const categorySlug = url.searchParams.get("category");
     const featured = url.searchParams.get("featured");
 
-    // Obtener todos los productos activos
-    let allProducts = db
+    // Obtener todos los productos activos (ahora con await para libsql)
+    let allProducts = await db
       .select({
         id: products.id,
         name: products.name,
@@ -31,16 +31,14 @@ export const GET: APIRoute = async ({ url }) => {
         isActive: products.isActive,
       })
       .from(products)
-      .where(eq(products.isActive, true))
-      .all();
+      .where(eq(products.isActive, true));
 
     // Filtrar por categoría si se especifica
     if (categorySlug) {
-      const category = db
+      const [category] = await db
         .select()
         .from(categories)
-        .where(eq(categories.slug, categorySlug))
-        .get();
+        .where(eq(categories.slug, categorySlug));
 
       if (category) {
         allProducts = allProducts.filter((p) => p.categoryId === category.id);
@@ -53,41 +51,41 @@ export const GET: APIRoute = async ({ url }) => {
     }
 
     // Obtener las tallas para cada producto
-    const productsWithSizes = allProducts.map((product) => {
-      const productSizeRecords = db
-        .select({
-          sizeName: sizes.name,
-        })
-        .from(productSizes)
-        .innerJoin(sizes, eq(productSizes.sizeId, sizes.id))
-        .where(eq(productSizes.productId, product.id))
-        .all();
+    const productsWithSizes = await Promise.all(
+      allProducts.map(async (product) => {
+        const productSizeRecords = await db
+          .select({
+            sizeName: sizes.name,
+          })
+          .from(productSizes)
+          .innerJoin(sizes, eq(productSizes.sizeId, sizes.id))
+          .where(eq(productSizes.productId, product.id));
 
-      const sizeNames = productSizeRecords.map((ps) => ps.sizeName);
+        const sizeNames = productSizeRecords.map((ps) => ps.sizeName);
 
-      // Obtener nombre de categoría
-      const category = db
-        .select({ name: categories.name })
-        .from(categories)
-        .where(eq(categories.id, product.categoryId))
-        .get();
+        // Obtener nombre de categoría
+        const [category] = await db
+          .select({ name: categories.name })
+          .from(categories)
+          .where(eq(categories.id, product.categoryId));
 
-      return {
-        id: product.id,
-        name: product.name,
-        slug: product.slug,
-        description: product.description,
-        price: product.price,
-        compareAtPrice: product.compareAtPrice,
-        image: product.imageUrl,
-        images: product.images || [],
-        category: category?.name || "Sin categoría",
-        categoryId: product.categoryId,
-        sizes: sizeNames.length > 0 ? sizeNames : ["S", "M", "L", "XL"],
-        stock: product.stock,
-        featured: product.featured === true,
-      };
-    });
+        return {
+          id: product.id,
+          name: product.name,
+          slug: product.slug,
+          description: product.description,
+          price: product.price,
+          compareAtPrice: product.compareAtPrice,
+          image: product.imageUrl,
+          images: product.images || [],
+          category: category?.name || "Sin categoría",
+          categoryId: product.categoryId,
+          sizes: sizeNames.length > 0 ? sizeNames : ["S", "M", "L", "XL"],
+          stock: product.stock,
+          featured: product.featured === true,
+        };
+      })
+    );
 
     return new Response(
       JSON.stringify({
