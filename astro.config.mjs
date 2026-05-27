@@ -7,9 +7,7 @@ import vercel from "@astrojs/vercel";
 // https://astro.build/config
 export default defineConfig({
   // Habilitar SSR (Server-Side Rendering)
-  output: "server",
-
-  // Adaptador de Vercel para producción serverless
+  output: 'server', 
   adapter: vercel(),
 
   integrations: [react()],
