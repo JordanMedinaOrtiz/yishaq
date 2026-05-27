@@ -1,0 +1,49 @@
+---
+/**
+ * checkout.astro - Página de Checkout
+ * Pasarela de pago premium YISHAQ
+ */
+import Layout from "../layouts/Layout.astro";
+import { CheckoutPage } from "../components/checkout/CheckoutPage";
+---
+
+<Layout title="Checkout | YISHAQ">
+  <CheckoutPage client:load />
+</Layout>
+
+<style is:global>
+  /* Perspective for 3D card */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  /* Hide scrollbar but allow scrolling */
+  .max-h-64::-webkit-scrollbar {
+    width: 4px;
+  }
+  .max-h-64::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .max-h-64::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 2px;
+  }
+  .max-h-64::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary));
+  }
+
+  /* Confetti animation */
+  @keyframes confetti-fall {
+    0% {
+      opacity: 0;
+      transform: translateY(-20px) rotate(0deg);
+    }
+    10% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(100vh) rotate(720deg);
+    }
+  }
+</style>

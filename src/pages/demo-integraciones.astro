@@ -1,0 +1,18 @@
+---
+/**
+ * Página de demostración de integraciones CBSE & SOA.
+ *
+ * Muestra las dos funcionalidades integradas al e-commerce YISHAQ:
+ * 1. Componente TicketCard (Equipo 8 — CBSE)
+ * 2. Generador de Diseños con IA (Equipo 6 — SOA)
+ *
+ * Usa `client:load` para hidratar la isla React inmediatamente,
+ * ya que contiene elementos interactivos (formularios, estados).
+ */
+import Layout from "../layouts/Layout.astro";
+import { DemoIntegraciones as DemoIntegracionesIsland } from "../components/DemoIntegraciones";
+---
+
+<Layout>
+  <DemoIntegracionesIsland client:load />
+</Layout>
