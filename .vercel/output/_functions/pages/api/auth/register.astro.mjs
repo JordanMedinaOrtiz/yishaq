@@ -1,4 +1,4 @@
-import { r as register, c as createAuthCookie } from '../../../chunks/auth_B9u7kCyc.mjs';
+import { r as register, c as createAuthCookie } from '../../../chunks/auth_BhSwItoV.mjs';
 export { renderers } from '../../../renderers.mjs';
 
 const POST = async ({ request }) => {

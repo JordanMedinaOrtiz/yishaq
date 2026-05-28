@@ -1,4 +1,4 @@
-import { g as getTokenFromCookie, a as logout, b as createLogoutCookie } from '../../../chunks/auth_B9u7kCyc.mjs';
+import { g as getTokenFromCookie, b as logout, a as createLogoutCookie } from '../../../chunks/auth_BhSwItoV.mjs';
 export { renderers } from '../../../renderers.mjs';
 
 const POST = async ({ request }) => {

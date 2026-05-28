@@ -1,19 +1,19 @@
-import { e as createComponent, f as createAstro, k as renderComponent, r as renderTemplate } from '../chunks/astro/server_CJOMfcep.mjs';
+import { a2 as createComponent, ad as renderComponent, ak as renderTemplate, a1 as createAstro } from '../chunks/astro/server_S7tF6J1M.mjs';
 import 'piccolore';
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { u as useProducts, P as ProductProvider } from '../chunks/ProductContext_COki0o68.mjs';
 import { ArrowLeft, LayoutDashboard, DollarSign, ShoppingCart, Package, AlertTriangle, Loader2, Pencil, Trash2, X, ChevronDown, ChevronUp, Check, Edit3, MapPin, Phone, Mail, Calendar, CreditCard, Truck, CheckCircle2, XCircle, Clock, ShoppingBag } from 'lucide-react';
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { C as Card, a as CardContent } from '../chunks/card_Dc3WLXaj.mjs';
+import { C as Card, a as CardContent } from '../chunks/card_QBz6AcUn.mjs';
 import { c as cn, b as buttonVariants } from '../chunks/button_EkdW3CYr.mjs';
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { L as Label, I as Input } from '../chunks/label_IJB1Fc6j.mjs';
 import * as SelectPrimitive from '@radix-ui/react-select';
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
-import { $ as $$Layout } from '../chunks/Layout_DejvdVPx.mjs';
-import { g as getTokenFromCookie, v as validateSession } from '../chunks/auth_B9u7kCyc.mjs';
+import { $ as $$Layout } from '../chunks/Layout_U0q2Sge3.mjs';
+import { g as getTokenFromCookie, v as validateSession } from '../chunks/auth_BhSwItoV.mjs';
 export { renderers } from '../renderers.mjs';
 
 function AdminHeader() {

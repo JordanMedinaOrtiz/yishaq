@@ -1,6 +1,6 @@
-import { e as createComponent, k as renderComponent, r as renderTemplate } from '../chunks/astro/server_CJOMfcep.mjs';
+import { a2 as createComponent, ad as renderComponent, ak as renderTemplate } from '../chunks/astro/server_S7tF6J1M.mjs';
 import 'piccolore';
-import { $ as $$Layout } from '../chunks/Layout_DejvdVPx.mjs';
+import { $ as $$Layout } from '../chunks/Layout_U0q2Sge3.mjs';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { u as useAuth, A as AuthProvider } from '../chunks/AuthContext_DjGZTLld.mjs';
 import { u as useCart, C as CartProvider } from '../chunks/CartContext_qAEPAAmN.mjs';

@@ -1,4 +1,4 @@
-import { l as login, c as createAuthCookie } from '../../../chunks/auth_B9u7kCyc.mjs';
+import { l as login, c as createAuthCookie } from '../../../chunks/auth_BhSwItoV.mjs';
 export { renderers } from '../../../renderers.mjs';
 
 const POST = async ({ request }) => {

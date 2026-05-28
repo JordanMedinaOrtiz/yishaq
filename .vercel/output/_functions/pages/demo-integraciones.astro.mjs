@@ -1,13 +1,13 @@
-import { e as createComponent, k as renderComponent, r as renderTemplate } from '../chunks/astro/server_CJOMfcep.mjs';
+import { a2 as createComponent, ad as renderComponent, ak as renderTemplate } from '../chunks/astro/server_S7tF6J1M.mjs';
 import 'piccolore';
-import { $ as $$Layout } from '../chunks/Layout_DejvdVPx.mjs';
+import { $ as $$Layout } from '../chunks/Layout_U0q2Sge3.mjs';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
-import { useState, useRef, useCallback, useEffect, Suspense } from 'react';
-import { FileText, User, CheckCircle2, Clock, AlertCircle, Loader2, RotateCcw, Boxes, Component, Cpu, Sparkles, Server, ArrowRight, RefreshCw, Image, AlertTriangle } from 'lucide-react';
-import { C as Card, b as CardHeader, c as CardTitle, a as CardContent, d as CardFooter } from '../chunks/card_Dc3WLXaj.mjs';
+import { useState, useRef, useCallback, useEffect, Suspense, Component, useMemo } from 'react';
+import { FileText, User, CheckCircle2, Clock, AlertCircle, Loader2, RotateCcw, AlertTriangle, RefreshCw, Boxes, Component as Component$1, Cpu, Sparkles, Server, ArrowRight, Image } from 'lucide-react';
+import { C as Card, c as CardHeader, d as CardTitle, a as CardContent, b as CardFooter } from '../chunks/card_QBz6AcUn.mjs';
 import { c as cn, B as Button } from '../chunks/button_EkdW3CYr.mjs';
-import { Canvas, useLoader, useFrame } from '@react-three/fiber';
-import { Environment, OrbitControls, ContactShadows } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { useGLTF, Environment, OrbitControls, Center, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
 export { renderers } from '../renderers.mjs';
 
@@ -178,60 +178,141 @@ function useAiDesign() {
   };
 }
 
-function TShirtModel({ texturaUrl }) {
-  const meshRef = useRef(null);
-  const [hovered, setHovered] = useState(false);
-  const texture = useLoader(THREE.TextureLoader, texturaUrl);
-  useEffect(() => {
-    if (texture) {
-      texture.colorSpace = THREE.SRGBColorSpace;
-      texture.flipY = true;
-      texture.anisotropy = 16;
-      texture.wrapS = THREE.ClampToEdgeWrapping;
-      texture.wrapT = THREE.ClampToEdgeWrapping;
-      texture.needsUpdate = true;
+class Canvas3DErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, errorMessage: "" };
+  }
+  static getDerivedStateFromError(error) {
+    return {
+      hasError: true,
+      errorMessage: error.message || "Error desconocido en el visor 3D"
+    };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("[Canvas3DErrorBoundary] Error capturado:", error);
+    console.error("[Canvas3DErrorBoundary] Component stack:", errorInfo.componentStack);
+  }
+  handleReset = () => {
+    this.setState({ hasError: false, errorMessage: "" });
+    this.props.onReset?.();
+  };
+  render() {
+    if (this.state.hasError) {
+      return /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center justify-center h-full min-h-[400px] p-8 text-center", children: [
+        /* @__PURE__ */ jsx("div", { className: "inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-destructive/10 mb-4", children: /* @__PURE__ */ jsx(AlertTriangle, { className: "w-8 h-8 text-destructive" }) }),
+        /* @__PURE__ */ jsx("p", { className: "text-sm font-medium text-foreground mb-1", children: "Error en el visor 3D" }),
+        /* @__PURE__ */ jsx("p", { className: "text-xs text-muted-foreground max-w-xs mb-4", children: this.state.errorMessage }),
+        /* @__PURE__ */ jsxs(
+          "button",
+          {
+            onClick: this.handleReset,
+            className: cn(
+              "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm",
+              "bg-secondary text-foreground",
+              "border border-border/50",
+              "hover:bg-secondary/80 transition-colors"
+            ),
+            children: [
+              /* @__PURE__ */ jsx(RefreshCw, { className: "w-4 h-4" }),
+              "Reintentar"
+            ]
+          }
+        )
+      ] });
     }
-  }, [texture]);
+    return this.props.children;
+  }
+}
+function TShirtModel({ texturaUrl }) {
+  const groupRef = useRef(null);
+  const [hovered, setHovered] = useState(false);
+  const [texture, setTexture] = useState(null);
+  const [loadError, setLoadError] = useState(false);
+  const { scene } = useGLTF("/t-shirt.glb");
+  const scenaClonada = useMemo(() => {
+    const clon = scene.clone(true);
+    clon.traverse((nodo) => {
+      if (nodo instanceof THREE.Mesh && nodo.material) {
+        nodo.material = Array.isArray(nodo.material) ? nodo.material.map((m) => m.clone()) : nodo.material.clone();
+      }
+    });
+    return clon;
+  }, [scene]);
+  useEffect(() => {
+    if (!texturaUrl) return;
+    setTexture(null);
+    setLoadError(false);
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      texturaUrl,
+      (tex) => {
+        tex.flipY = false;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(1, 1);
+        tex.anisotropy = 16;
+        tex.needsUpdate = true;
+        setTexture(tex);
+      },
+      void 0,
+      (err) => {
+        console.error("[TShirtModel] Error al cargar textura IA:", err);
+        setLoadError(true);
+      }
+    );
+  }, [texturaUrl]);
+  useEffect(() => {
+    if (!texture) return;
+    scenaClonada.traverse((nodo) => {
+      if (nodo instanceof THREE.Mesh) {
+        console.log(
+          `[TShirtModel] Aplicando textura → nodo: "${nodo.name}"`,
+          `| geometría: ${nodo.geometry.type}`
+        );
+        nodo.material = new THREE.MeshStandardMaterial({
+          map: texture,
+          // BLANCO PURO: sin esto el color base del .glb se multiplica
+          // con la textura, tiñendo la imagen y haciéndola aparecer como
+          // un tinte sólido en vez de un gráfico detallado.
+          color: new THREE.Color("#ffffff"),
+          roughness: 0.8,
+          metalness: 0,
+          envMapIntensity: 0.5
+        });
+        nodo.material.needsUpdate = true;
+      }
+    });
+  }, [texture, scenaClonada]);
   useFrame((_, delta) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += delta * 0.3;
+    if (groupRef.current) {
+      groupRef.current.rotation.y += delta * 0.3;
     }
   });
-  return /* @__PURE__ */ jsxs("group", { children: [
-    /* @__PURE__ */ jsxs(
-      "mesh",
-      {
-        ref: meshRef,
-        position: [0, 0.2, 0],
-        onPointerOver: () => setHovered(true),
-        onPointerOut: () => setHovered(false),
-        scale: hovered ? 1.02 : 1,
-        children: [
-          /* @__PURE__ */ jsx("cylinderGeometry", { args: [1.2, 1, 2.4, 32, 1, true, -Math.PI * 0.4, Math.PI * 0.8] }),
-          /* @__PURE__ */ jsx(
-            "meshStandardMaterial",
-            {
-              map: texture,
-              side: THREE.DoubleSide,
-              roughness: 0.8,
-              metalness: 0,
-              envMapIntensity: 0.3
-            }
-          )
-        ]
-      }
-    ),
-    /* @__PURE__ */ jsx(
-      ContactShadows,
-      {
-        position: [0, -1.1, 0],
-        opacity: 0.4,
-        scale: 5,
-        blur: 2.5,
-        far: 4
-      }
-    )
-  ] });
+  if (loadError) return /* @__PURE__ */ jsx(DefaultScene, {});
+  return /* @__PURE__ */ jsxs(
+    "group",
+    {
+      ref: groupRef,
+      onPointerOver: () => setHovered(true),
+      onPointerOut: () => setHovered(false),
+      scale: hovered ? 1.02 : 1,
+      children: [
+        /* @__PURE__ */ jsx(Center, { children: /* @__PURE__ */ jsx("primitive", { object: scenaClonada }) }),
+        /* @__PURE__ */ jsx(
+          ContactShadows,
+          {
+            position: [0, -1.2, 0],
+            opacity: 0.45,
+            scale: 6,
+            blur: 2.5,
+            far: 4
+          }
+        )
+      ]
+    }
+  );
 }
 function LoadingFallback3D() {
   const ringRef = useRef(null);
@@ -253,31 +334,35 @@ function LoadingFallback3D() {
   ] });
 }
 function DefaultScene() {
-  const meshRef = useRef(null);
+  const groupRef = useRef(null);
+  const { scene } = useGLTF("/t-shirt.glb");
+  const scenaClonada = useMemo(() => {
+    const clon = scene.clone(true);
+    clon.traverse((nodo) => {
+      if (nodo instanceof THREE.Mesh) {
+        nodo.material = new THREE.MeshStandardMaterial({
+          color: "#1a1a2e",
+          roughness: 0.9,
+          metalness: 0,
+          envMapIntensity: 0.2
+        });
+      }
+    });
+    return clon;
+  }, [scene]);
   useFrame((_, delta) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += delta * 0.3;
+    if (groupRef.current) {
+      groupRef.current.rotation.y += delta * 0.3;
     }
   });
-  return /* @__PURE__ */ jsxs("group", { children: [
-    /* @__PURE__ */ jsxs("mesh", { ref: meshRef, position: [0, 0.2, 0], children: [
-      /* @__PURE__ */ jsx("cylinderGeometry", { args: [1.2, 1, 2.4, 32, 1, true, -Math.PI * 0.4, Math.PI * 0.8] }),
-      /* @__PURE__ */ jsx(
-        "meshStandardMaterial",
-        {
-          color: "#1a1a2e",
-          side: THREE.DoubleSide,
-          roughness: 0.9,
-          metalness: 0
-        }
-      )
-    ] }),
+  return /* @__PURE__ */ jsxs("group", { ref: groupRef, children: [
+    /* @__PURE__ */ jsx(Center, { children: /* @__PURE__ */ jsx("primitive", { object: scenaClonada }) }),
     /* @__PURE__ */ jsx(
       ContactShadows,
       {
-        position: [0, -1.1, 0],
+        position: [0, -1.2, 0],
         opacity: 0.3,
-        scale: 5,
+        scale: 6,
         blur: 2.5,
         far: 4
       }
@@ -285,55 +370,79 @@ function DefaultScene() {
   ] });
 }
 function TShirtViewer3D({ texturaUrl, className }) {
-  return /* @__PURE__ */ jsxs(
-    "div",
-    {
-      className: cn(
-        "relative w-full h-full min-h-[400px] rounded-xl overflow-hidden",
-        "bg-gradient-to-b from-[#0a0a1a] to-[#111128]",
-        "border border-border/30",
-        className
+  const [errorBoundaryKey, setErrorBoundaryKey] = useState(0);
+  const handleErrorReset = () => {
+    setErrorBoundaryKey((prev) => prev + 1);
+  };
+  return (
+    // ErrorBoundary FUERA del Canvas: su fallback HTML se renderiza
+    // correctamente y rescata el visor si WebGL colapsa de forma inesperada.
+    /* @__PURE__ */ jsxs(Canvas3DErrorBoundary, { onReset: handleErrorReset, children: [
+      /* @__PURE__ */ jsxs(
+        "div",
+        {
+          className: cn(
+            "relative w-full h-full min-h-[400px] rounded-xl overflow-hidden",
+            "bg-linear-to-b from-[#0a0a1a] to-[#111128]",
+            "border border-border/30",
+            className
+          ),
+          children: [
+            /* @__PURE__ */ jsxs(
+              Canvas,
+              {
+                camera: { position: [0, 0, 2], fov: 45, near: 0.01 },
+                gl: {
+                  antialias: true,
+                  toneMapping: THREE.ACESFilmicToneMapping,
+                  toneMappingExposure: 1.2,
+                  // Permitir que WebGL intente preservar el contexto
+                  powerPreference: "default"
+                },
+                dpr: [1, 2],
+                onCreated: ({ gl }) => {
+                  const canvas = gl.domElement;
+                  canvas.addEventListener("webglcontextlost", (event) => {
+                    event.preventDefault();
+                    console.warn("[TShirtViewer3D] WebGL context lost — prevenido");
+                  });
+                  canvas.addEventListener("webglcontextrestored", () => {
+                    console.info("[TShirtViewer3D] WebGL context restaurado");
+                  });
+                },
+                children: [
+                  /* @__PURE__ */ jsx("ambientLight", { intensity: 0.5 }),
+                  /* @__PURE__ */ jsx("directionalLight", { position: [5, 5, 5], intensity: 1, castShadow: true }),
+                  /* @__PURE__ */ jsx("directionalLight", { position: [-3, 3, -3], intensity: 0.3 }),
+                  /* @__PURE__ */ jsx("pointLight", { position: [0, 3, 0], intensity: 0.5, color: "#4ade80" }),
+                  /* @__PURE__ */ jsx(Environment, { preset: "city" }),
+                  /* @__PURE__ */ jsx(Suspense, { fallback: /* @__PURE__ */ jsx(LoadingFallback3D, {}), children: texturaUrl ? /* @__PURE__ */ jsx(TShirtModel, { texturaUrl }) : /* @__PURE__ */ jsx(DefaultScene, {}) }),
+                  /* @__PURE__ */ jsx(
+                    OrbitControls,
+                    {
+                      makeDefault: true,
+                      enablePan: false,
+                      enableZoom: true,
+                      minDistance: 0.5,
+                      maxDistance: 7,
+                      minPolarAngle: Math.PI * 0.2,
+                      maxPolarAngle: Math.PI * 0.7,
+                      autoRotate: false
+                    }
+                  )
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxs("div", { className: "absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/60 backdrop-blur-sm border border-border/30 text-xs text-muted-foreground/60 pointer-events-none", children: [
+              /* @__PURE__ */ jsx(RotateCcw, { className: "w-3 h-3" }),
+              "Arrastra para rotar"
+            ] }),
+            texturaUrl && /* @__PURE__ */ jsx("div", { className: "absolute top-3 right-3 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-medium", children: "✦ Textura IA aplicada" })
+          ]
+        }
       ),
-      children: [
-        /* @__PURE__ */ jsxs(
-          Canvas,
-          {
-            camera: { position: [0, 0.5, 4], fov: 45 },
-            gl: {
-              antialias: true,
-              toneMapping: THREE.ACESFilmicToneMapping,
-              toneMappingExposure: 1.2
-            },
-            dpr: [1, 2],
-            children: [
-              /* @__PURE__ */ jsx("ambientLight", { intensity: 0.5 }),
-              /* @__PURE__ */ jsx("directionalLight", { position: [5, 5, 5], intensity: 1, castShadow: true }),
-              /* @__PURE__ */ jsx("directionalLight", { position: [-3, 3, -3], intensity: 0.3 }),
-              /* @__PURE__ */ jsx("pointLight", { position: [0, 3, 0], intensity: 0.5, color: "#4ade80" }),
-              /* @__PURE__ */ jsx(Environment, { preset: "city" }),
-              texturaUrl ? /* @__PURE__ */ jsx(Suspense, { fallback: /* @__PURE__ */ jsx(LoadingFallback3D, {}), children: /* @__PURE__ */ jsx(TShirtModel, { texturaUrl }) }) : /* @__PURE__ */ jsx(DefaultScene, {}),
-              /* @__PURE__ */ jsx(
-                OrbitControls,
-                {
-                  enablePan: false,
-                  enableZoom: true,
-                  minDistance: 2.5,
-                  maxDistance: 7,
-                  minPolarAngle: Math.PI * 0.2,
-                  maxPolarAngle: Math.PI * 0.7,
-                  autoRotate: false
-                }
-              )
-            ]
-          }
-        ),
-        /* @__PURE__ */ jsxs("div", { className: "absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/60 backdrop-blur-sm border border-border/30 text-xs text-muted-foreground/60 pointer-events-none", children: [
-          /* @__PURE__ */ jsx(RotateCcw, { className: "w-3 h-3" }),
-          "Arrastra para rotar"
-        ] }),
-        texturaUrl && /* @__PURE__ */ jsx("div", { className: "absolute top-3 right-3 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-medium", children: "✦ Textura IA aplicada" })
-      ]
-    }
+      "    "
+    ] }, errorBoundaryKey)
   );
 }
 function TShirtViewerSSR(props) {
@@ -347,7 +456,7 @@ function TShirtViewerSSR(props) {
       {
         className: cn(
           "flex items-center justify-center min-h-[400px] rounded-xl",
-          "bg-gradient-to-b from-[#0a0a1a] to-[#111128]",
+          "bg-linear-to-b from-[#0a0a1a] to-[#111128]",
           "border border-border/30",
           props.className
         ),
@@ -360,6 +469,7 @@ function TShirtViewerSSR(props) {
   }
   return /* @__PURE__ */ jsx(TShirtViewer3D, { ...props });
 }
+useGLTF.preload("/t-shirt.glb");
 
 const TICKETS_DEMO = [
   {
@@ -423,7 +533,7 @@ function DemoIntegraciones() {
     /* @__PURE__ */ jsxs("main", { className: "max-w-6xl mx-auto px-6 py-12 space-y-20", children: [
       /* @__PURE__ */ jsxs("section", { id: "ticket-card-demo", "aria-labelledby": "tickets-heading", children: [
         /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3 mb-2", children: [
-          /* @__PURE__ */ jsx("div", { className: "flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 border border-primary/20", children: /* @__PURE__ */ jsx(Component, { className: "w-5 h-5 text-primary" }) }),
+          /* @__PURE__ */ jsx("div", { className: "flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 border border-primary/20", children: /* @__PURE__ */ jsx(Component$1, { className: "w-5 h-5 text-primary" }) }),
           /* @__PURE__ */ jsxs("div", { children: [
             /* @__PURE__ */ jsx("p", { className: "text-xs font-medium text-primary tracking-widest uppercase", children: "Objetivo 1 — Equipo 8" }),
             /* @__PURE__ */ jsx("h2", { id: "tickets-heading", className: "text-2xl font-bold tracking-tight", children: "Componente TicketCard" })

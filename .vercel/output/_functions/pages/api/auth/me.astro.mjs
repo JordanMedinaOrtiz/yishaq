@@ -1,4 +1,4 @@
-import { g as getTokenFromCookie, v as validateSession } from '../../../chunks/auth_B9u7kCyc.mjs';
+import { g as getTokenFromCookie, v as validateSession } from '../../../chunks/auth_BhSwItoV.mjs';
 export { renderers } from '../../../renderers.mjs';
 
 const GET = async ({ request }) => {
